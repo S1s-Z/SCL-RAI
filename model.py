@@ -23,6 +23,7 @@ class PhraseClassifier(nn.Module):
                  score_percent: float,
                  cl_scale: int,
                  cl_temp: float,
+                 use_detach: bool,
                  bert_path: str):
         super(PhraseClassifier, self).__init__()
 
@@ -33,6 +34,7 @@ class PhraseClassifier(nn.Module):
         self._score_percent = score_percent
         self._cl_scale = cl_scale
         self._cl_temp = cl_temp
+        self._use_detach = use_detach
         self._encoder = BERT(bert_path)
         self._classifier = MLP(self._encoder.dimension * 4, hidden_dim, len(label_vocab), dropout_rate)
         #self._criterion = nn.NLLLoss(torch.tensor([0.05, 0.2, 0.5, 0.5, 0.5]))
@@ -118,12 +120,14 @@ class PhraseClassifier(nn.Module):
         score_t, embedding_t = self(var_sent, mask_mat=attn_mask, starts=start_mat)
 
         positions, targets = self._pre_process_output(segments, lengths)
-        flat_s = torch.cat([score_t[[i], j, k] for i, j, k in positions], dim=0)
-        flat_e = torch.cat([embedding_t[[i], j, k] for i, j, k in positions], dim=0)
+        targets = targets.cuda()
+        flat_s = torch.cat([score_t[[i], j, k] for i, j, k in positions], dim=0).cuda()
+        flat_e = torch.cat([embedding_t[[i], j, k] for i, j, k in positions], dim=0).cuda()
         softmax_score = torch.log_softmax(flat_s, dim=-1)
-        CE_loss = self._criterion(softmax_score, targets)
+        CE_loss = self._criterion(softmax_score, targets.cuda())
         #CL_loss = contrastive_loss(torch.nn.functional.normalize(flat_e.cpu(),p=2,dim=0), targets)
-        CL_loss = contrastive_loss(flat_e, targets, temp = self._cl_temp, scale = self._cl_scale)
+
+        CL_loss = contrastive_loss(flat_e.cuda(), targets.cuda(), detach = self._use_detach,temp = self._cl_temp, scale = self._cl_scale)
 
 
         dict_center = {}
@@ -131,14 +135,15 @@ class PhraseClassifier(nn.Module):
         target_num = softmax_score.size()[1]
         #初始化
         for i in range(0,target_num):
-            dict_center[i] = torch.zeros(embedding_t.size()[3]).cpu()
+            dict_center[i] = torch.zeros(embedding_t.size()[3])#cpu
             dict_num[i] = 0
         for i in range(0,len(targets)):
             dict_num[targets[i].item()] = dict_num[targets[i].item()] + 1
         for i in range(0,len(flat_e)):
-            dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].cpu().detach()/dict_num[targets[i].item()])
+            dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].detach().cpu()/dict_num[targets[i].item()])#cpu
 
         return self._clloss_percent * CL_loss + (1-self._clloss_percent) * CE_loss, dict_center
+        #return (1 - self._clloss_percent) * CE_loss, dict_center
 
     def inference(self, sentences, dict_center):
         var_sent, attn_mask, starts, lengths = self._pre_process_input(sentences)
@@ -154,7 +159,7 @@ class PhraseClassifier(nn.Module):
         #distance_score = euclidean_dist(torch.nn.functional.normalize(embedding_t.cpu(),p=2,dim=0), torch.nn.functional.normalize(center_tensor.cpu(),p=2,dim=0))
         distance_score = sim_matrix(embedding_t.cpu(), center_tensor.cpu())
         distance_score = torch.softmax(distance_score, dim=-1)
-        #distance_score[:,0] = 0 #控制去掉 o的embedding
+        distance_score[:,0] = 0 #控制去掉 o的embedding  左边的去掉了O的embedding，右边的没有去掉embedding
         distance_score = distance_score.view(bz,len_1,len_2,-1)
 
         #val_table, idx_table = torch.max(score_t, dim=-1)
