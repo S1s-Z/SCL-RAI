@@ -22,13 +22,14 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", "-bs", type=int, default=16)
 
     parser.add_argument("--negative_rate", "-nr", type=float, default=0.35)
-    parser.add_argument("--warmup_proportion", "-wp", type=float, default=0.1)# 原文0.1
+    parser.add_argument("--warmup_proportion", "-wp", type=float, default=0.1)
     parser.add_argument("--hidden_dim", "-hd", type=int, default=256)
     parser.add_argument("--dropout_rate", "-dr", type=float, default=0.4)
     parser.add_argument("--CLloss_percent", "-lp", type=float, default=0.1)
-    parser.add_argument("--score_percent", "-sp", type=float, default=0.1)
+    parser.add_argument("--score_percent", "-sp", type=float, default=0.5)
     parser.add_argument("--cl_scale", "-cs", type=int, default=100)
     parser.add_argument("--cl_temp", "-temp", type=float, default=0.1)
+    parser.add_argument("--use_detach", "-ud", type=bool, default=False)
 
 
     args = parser.parse_args()
@@ -46,9 +47,15 @@ if __name__ == "__main__":
     model = PhraseClassifier(lexical_vocab, label_vocab, args.hidden_dim,
                              args.dropout_rate, args.negative_rate,
                              args.CLloss_percent, args.score_percent,
-                             args.cl_scale, args.cl_temp,
+                             args.cl_scale, args.cl_temp, args.use_detach,
                              bert_path)
+
     model = model.cuda() if torch.cuda.is_available() else model.cpu()
+
+    '''
+    if torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
+    '''
 
     all_parameters = list(model.named_parameters())
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']

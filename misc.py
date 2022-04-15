@@ -125,13 +125,17 @@ def sim_matrix(a, b, eps=1e-8):
     sim_mt = torch.mm(a_norm, b_norm.transpose(0, 1))
     return sim_mt
 
-def contrastive_loss(embedding, label, temp=0.1, scale=100):
+def contrastive_loss(embedding, label, detach = False, temp=0.1, scale=100):
     """calculate the contrastive loss
     """
     # cosine similarity between embeddings
-    cosine_sim = sim_matrix(embedding,embedding)
+    if detach:
+        cosine_sim = sim_matrix(embedding,embedding).detach() #测试是否需要detach
     # remove diagonal elements from matrix
-    dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1)
+        dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1).detach()#测试是否需要detach
+    else:
+        cosine_sim = sim_matrix(embedding, embedding)
+        dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1)
     #print(dis.shape)
     # apply temprature to elements
     dis = dis / temp
