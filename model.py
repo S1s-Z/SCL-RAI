@@ -37,7 +37,6 @@ class PhraseClassifier(nn.Module):
         self._use_detach = use_detach
         self._encoder = BERT(bert_path)
         self._classifier = MLP(self._encoder.dimension * 4, hidden_dim, len(label_vocab), dropout_rate)
-        #self._criterion = nn.NLLLoss(torch.tensor([0.05, 0.2, 0.5, 0.5, 0.5]))
         self._criterion = nn.NLLLoss()
 
     def forward(self, var_h, **kwargs):
@@ -115,6 +114,15 @@ class PhraseClassifier(nn.Module):
         flat_s = torch.cat([score_t[[i], j, k] for i, j, k in positions], dim=0)
         return self._criterion(torch.log_softmax(flat_s, dim=-1), targets)
 
+
+    def get_pit(self, sentences, segments):
+        var_sent, attn_mask, start_mat, lengths = self._pre_process_input(sentences)
+        score_t, embedding_t = self(var_sent, mask_mat=attn_mask, starts=start_mat)
+        positions, targets = self._pre_process_output(segments, lengths)
+        flat_e = torch.cat([embedding_t[[i], j, k] for i, j, k in positions], dim=0)
+        return targets.detach().cpu().numpy(), flat_e.detach().cpu().numpy()
+
+
     def estimate_CL(self, sentences, segments):
         var_sent, attn_mask, start_mat, lengths = self._pre_process_input(sentences)
         score_t, embedding_t = self(var_sent, mask_mat=attn_mask, starts=start_mat)
@@ -125,8 +133,6 @@ class PhraseClassifier(nn.Module):
         flat_e = torch.cat([embedding_t[[i], j, k] for i, j, k in positions], dim=0).cuda()
         softmax_score = torch.log_softmax(flat_s, dim=-1)
         CE_loss = self._criterion(softmax_score, targets.cuda())
-        #CL_loss = contrastive_loss(torch.nn.functional.normalize(flat_e.cpu(),p=2,dim=0), targets)
-
         CL_loss = contrastive_loss(flat_e.cuda(), targets.cuda(), detach = self._use_detach,temp = self._cl_temp, scale = self._cl_scale)
 
 
@@ -143,7 +149,7 @@ class PhraseClassifier(nn.Module):
             dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].detach().cpu()/dict_num[targets[i].item()])#cpu
 
         return self._clloss_percent * CL_loss + (1-self._clloss_percent) * CE_loss, dict_center
-        #return (1 - self._clloss_percent) * CE_loss, dict_center
+        #return CE_loss, dict_center
 
     def inference(self, sentences, dict_center):
         var_sent, attn_mask, starts, lengths = self._pre_process_input(sentences)
@@ -152,7 +158,6 @@ class PhraseClassifier(nn.Module):
 
 
         bz, len_1 ,len_2 ,hidden_len = embedding_t.size()
-        #dict_center[0] = torch.zeros(hidden_len) #尝试把O的中心向量，设置为0
         embedding_t = embedding_t.view(-1,hidden_len)
         center_tensor = torch.stack(list(dict_center.values()))
         #也许不需要normalize

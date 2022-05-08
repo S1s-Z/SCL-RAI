@@ -161,7 +161,7 @@ def contrastive_loss(embedding, label, detach = False, temp=0.1, scale=100):
             contrastive_loss += (inner_sum / (-n_i))
         else:
             contrastive_loss += 0
-    return contrastive_loss / scale #150 for EC
+    return contrastive_loss / scale
 
 def contrastive_loss_numpy(embedding, label, temp=0.05):
     """calculate the contrastive loss
