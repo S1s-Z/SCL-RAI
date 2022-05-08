@@ -1,2 +1,2 @@
-# RASCAL:
+# RASCAL
  updating
