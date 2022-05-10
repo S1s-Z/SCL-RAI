@@ -161,13 +161,13 @@ class PhraseClassifier(nn.Module):
         embedding_t = embedding_t.view(-1,hidden_len)
         center_tensor = torch.stack(list(dict_center.values()))
         
-        #distance_score = euclidean_dist(torch.nn.functional.normalize(embedding_t.cpu(),p=2,dim=0), torch.nn.functional.normalize(center_tensor.cpu(),p=2,dim=0))
+        
         distance_score = sim_matrix(embedding_t.cpu(), center_tensor.cpu())
         distance_score = torch.softmax(distance_score, dim=-1)
         distance_score[:,0] = 0 
         distance_score = distance_score.view(bz,len_1,len_2,-1)
 
-        #val_table, idx_table = torch.max(score_t, dim=-1)
+        
         score_result = (1-self._score_percent) * score_t.cpu() + self._score_percent * distance_score.cpu()
         val_table, idx_table = torch.max(score_result, dim=-1)
 
