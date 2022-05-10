@@ -95,7 +95,6 @@ class Procedure(object):
         dict_result = {}
         flag_num = 0
         for batch in tqdm(dataset, ncols=50):
-            #loss = model.estimate(*batch)
             loss, dict_center = model.estimate_CL(*batch)
 
             if flag_num == 0:
