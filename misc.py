@@ -116,9 +116,6 @@ def extract_json_data(file_path):
     return dataset
 
 def sim_matrix(a, b, eps=1e-8):
-    """
-    added eps for numerical stability
-    """
     a_n, b_n = a.norm(dim=1)[:, None], b.norm(dim=1)[:, None]
     a_norm = a / torch.max(a_n, eps * torch.ones_like(a_n))
     b_norm = b / torch.max(b_n, eps * torch.ones_like(b_n))
@@ -149,7 +146,6 @@ def contrastive_loss(embedding, label, detach = False, temp=0.1, scale=100):
     for i in range(len(embedding)):
         n_i = label.tolist().count(label[i]) - 1
         inner_sum = 0
-        # calculate inner sum
         for j in range(len(embedding)):
             if label[i] == label[j] and i != j:
                 inner_sum = inner_sum + torch.log(cosine_sim[i][j] / row_sum[i])
