@@ -139,9 +139,9 @@ class PhraseClassifier(nn.Module):
         dict_center = {}
         dict_num = {}
         target_num = softmax_score.size()[1]
-        #初始化
+        
         for i in range(0,target_num):
-            dict_center[i] = torch.zeros(embedding_t.size()[3])#cpu
+            dict_center[i] = torch.zeros(embedding_t.size()[3])
             dict_num[i] = 0
         for i in range(0,len(targets)):
             dict_num[targets[i].item()] = dict_num[targets[i].item()] + 1
@@ -154,17 +154,17 @@ class PhraseClassifier(nn.Module):
     def inference(self, sentences, dict_center):
         var_sent, attn_mask, starts, lengths = self._pre_process_input(sentences)
         log_items, embedding_t = self(var_sent, mask_mat=attn_mask, starts=starts)
-        score_t = torch.log_softmax(log_items, dim=-1) #模型的score  batch_size * len * len * cate_size
+        score_t = torch.log_softmax(log_items, dim=-1) 
 
 
         bz, len_1 ,len_2 ,hidden_len = embedding_t.size()
         embedding_t = embedding_t.view(-1,hidden_len)
         center_tensor = torch.stack(list(dict_center.values()))
-        #也许不需要normalize
+        
         #distance_score = euclidean_dist(torch.nn.functional.normalize(embedding_t.cpu(),p=2,dim=0), torch.nn.functional.normalize(center_tensor.cpu(),p=2,dim=0))
         distance_score = sim_matrix(embedding_t.cpu(), center_tensor.cpu())
         distance_score = torch.softmax(distance_score, dim=-1)
-        distance_score[:,0] = 0 #控制去掉 o的embedding  左边的去掉了O的embedding，右边的没有去掉embedding
+        distance_score[:,0] = 0 
         distance_score = distance_score.view(bz,len_1,len_2,-1)
 
         #val_table, idx_table = torch.max(score_t, dim=-1)
@@ -224,11 +224,6 @@ class MLP(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, dropout_rate):
         super(MLP, self).__init__()
 
-        '''
-        self._activator = nn.Sequential(nn.Linear(input_dim, hidden_dim),
-                                        nn.Tanh(),
-                                        nn.Linear(hidden_dim, output_dim))
-        '''
         self._densenet = nn.Sequential(nn.Linear(input_dim,hidden_dim),
                                       nn.Tanh())
         self._scorer = nn.Linear(hidden_dim, output_dim)
@@ -236,7 +231,6 @@ class MLP(nn.Module):
 
 
     def forward(self, var_h):
-        #return self._activator(self._dropout(var_h))
         return self._scorer(self._densenet(self._dropout(var_h)))
 
     def get_dense(self, var_h):
