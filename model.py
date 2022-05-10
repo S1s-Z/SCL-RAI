@@ -5,7 +5,7 @@ from torch import nn
 from pytorch_pretrained_bert import BertModel
 
 from misc import flat_list
-from misc import sim_matrix, contrastive_loss_numpy, contrastive_loss, contrastive_loss_eud
+from misc import sim_matrix, contrastive_loss
 from misc import iterative_support, conflict_judge, euclidean_dist
 from utils import UnitAlphabet, LabelAlphabet
 from sklearn.metrics.pairwise import cosine_similarity
@@ -106,22 +106,6 @@ class PhraseClassifier(nn.Module):
             var_lbl = var_lbl.cuda()
         return positions, var_lbl
 
-    def estimate(self, sentences, segments):
-        var_sent, attn_mask, start_mat, lengths = self._pre_process_input(sentences)
-        score_t, _ = self(var_sent, mask_mat=attn_mask, starts=start_mat)
-
-        positions, targets = self._pre_process_output(segments, lengths)
-        flat_s = torch.cat([score_t[[i], j, k] for i, j, k in positions], dim=0)
-        return self._criterion(torch.log_softmax(flat_s, dim=-1), targets)
-
-
-    def get_pit(self, sentences, segments):
-        var_sent, attn_mask, start_mat, lengths = self._pre_process_input(sentences)
-        score_t, embedding_t = self(var_sent, mask_mat=attn_mask, starts=start_mat)
-        positions, targets = self._pre_process_output(segments, lengths)
-        flat_e = torch.cat([embedding_t[[i], j, k] for i, j, k in positions], dim=0)
-        return targets.detach().cpu().numpy(), flat_e.detach().cpu().numpy()
-
 
     def estimate_CL(self, sentences, segments):
         var_sent, attn_mask, start_mat, lengths = self._pre_process_input(sentences)
@@ -149,7 +133,6 @@ class PhraseClassifier(nn.Module):
             dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].detach().cpu()/dict_num[targets[i].item()])#cpu
 
         return self._clloss_percent * CL_loss + (1-self._clloss_percent) * CE_loss, dict_center
-        #return CE_loss, dict_center
 
     def inference(self, sentences, dict_center):
         var_sent, attn_mask, starts, lengths = self._pre_process_input(sentences)
