@@ -111,7 +111,7 @@ class Procedure(object):
             optimizer.zero_grad()
             loss.backward()
 
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.5) #新添加
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.5)
             
             optimizer.step()
 
