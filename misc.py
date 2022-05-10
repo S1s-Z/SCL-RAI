@@ -126,29 +126,25 @@ def sim_matrix(a, b, eps=1e-8):
     return sim_mt
 
 def contrastive_loss(embedding, label, detach = False, temp=0.1, scale=100):
-    """calculate the contrastive loss
-    """
-    # cosine similarity between embeddings
     if detach:
-        cosine_sim = sim_matrix(embedding,embedding).detach() #测试是否需要detach
-    # remove diagonal elements from matrix
-        dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1).detach()#测试是否需要detach
+        cosine_sim = sim_matrix(embedding,embedding).detach() 
+        dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1).detach()
     else:
         cosine_sim = sim_matrix(embedding, embedding)
         dis = cosine_sim[~torch.eye(cosine_sim.shape[0], dtype=torch.bool)].reshape(cosine_sim.shape[0], -1)
-    #print(dis.shape)
-    # apply temprature to elements
+    
+    
     dis = dis / temp
     cosine_sim = cosine_sim / temp
-    # apply exp to elements
+    
     dis = torch.exp(dis)
     cosine_sim = torch.exp(cosine_sim)
 
-    # calculate row sum
+    
     row_sum = []
     for i in range(len(embedding)):
         row_sum.append(sum(dis[i]))
-    # calculate outer sum
+    
     contrastive_loss = 0
     for i in range(len(embedding)):
         n_i = label.tolist().count(label[i]) - 1
@@ -163,69 +159,3 @@ def contrastive_loss(embedding, label, detach = False, temp=0.1, scale=100):
             contrastive_loss += 0
     return contrastive_loss / scale
 
-def contrastive_loss_numpy(embedding, label, temp=0.05):
-    """calculate the contrastive loss
-    """
-    # cosine similarity between embeddings
-    cosine_sim = cosine_similarity(embedding.detach().numpy(), embedding.detach().numpy())
-    # remove diagonal elements from matrix
-    dis = cosine_sim[~np.eye(cosine_sim.shape[0], dtype=bool)].reshape(cosine_sim.shape[0], -1)
-    print(dis)
-    # apply temprature to elements
-    dis = dis / temp
-    cosine_sim = cosine_sim / temp
-    # apply exp to elements
-    dis = np.exp(dis)
-    cosine_sim = np.exp(cosine_sim)
-
-    # calculate row sum
-    row_sum = []
-    for i in range(len(embedding)):
-        row_sum.append(sum(dis[i]))
-    # calculate outer sum
-    contrastive_loss = 0
-    for i in range(len(embedding)):
-        n_i = label.tolist().count(label[i]) - 1
-        inner_sum = 0
-        # calculate inner sum
-        for j in range(len(embedding)):
-            if label[i] == label[j] and i != j:
-                inner_sum = inner_sum + np.log(cosine_sim[i][j] / row_sum[i])
-        if n_i != 0:
-            contrastive_loss += (inner_sum / (-n_i))
-        else:
-            contrastive_loss += 0
-    return contrastive_loss
-
-def contrastive_loss_eud(embedding, label, temp=0.05):
-    """calculate the contrastive loss
-    """
-    # cosine similarity between embeddings
-    cosine_sim = euclidean_dist(embedding.detach(), embedding.detach()).numpy()
-    # remove diagonal elements from matrix
-    dis = cosine_sim[~np.eye(cosine_sim.shape[0], dtype=bool)].reshape(cosine_sim.shape[0], -1)
-    # apply temprature to elements
-    dis = dis / temp
-    cosine_sim = cosine_sim / temp
-    # apply exp to elements
-    dis = np.exp(dis)
-    cosine_sim = np.exp(cosine_sim)
-
-    # calculate row sum
-    row_sum = []
-    for i in range(len(embedding)):
-        row_sum.append(sum(dis[i]))
-    # calculate outer sum
-    contrastive_loss = 0
-    for i in range(len(embedding)):
-        n_i = label.tolist().count(label[i]) - 1
-        inner_sum = 0
-        # calculate inner sum
-        for j in range(len(embedding)):
-            if label[i] == label[j] and i != j:
-                inner_sum = inner_sum + np.log(cosine_sim[i][j] / row_sum[i])
-        if n_i != 0:
-            contrastive_loss += (inner_sum / (-n_i))
-        else:
-            contrastive_loss += 0
-    return contrastive_loss
