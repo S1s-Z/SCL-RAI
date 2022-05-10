@@ -130,7 +130,7 @@ class PhraseClassifier(nn.Module):
         for i in range(0,len(targets)):
             dict_num[targets[i].item()] = dict_num[targets[i].item()] + 1
         for i in range(0,len(flat_e)):
-            dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].detach().cpu()/dict_num[targets[i].item()])#cpu
+            dict_center[targets[i].item()] = dict_center[targets[i].item()] + (flat_e[i].detach().cpu()/dict_num[targets[i].item()])
 
         return self._clloss_percent * CL_loss + (1-self._clloss_percent) * CE_loss, dict_center
 
