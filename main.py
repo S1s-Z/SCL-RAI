@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--epoch_num", "-en", type=int, default=40)
     parser.add_argument("--batch_size", "-bs", type=int, default=16)
 
-    parser.add_argument("--negative_rate", "-nr", type=float, default=0.35)#0.35
+    parser.add_argument("--negative_rate", "-nr", type=float, default=0.35)
     parser.add_argument("--warmup_proportion", "-wp", type=float, default=0.1)
     parser.add_argument("--hidden_dim", "-hd", type=int, default=256)
     parser.add_argument("--dropout_rate", "-dr", type=float, default=0.4)
@@ -66,21 +66,15 @@ if __name__ == "__main__":
     best_test = 0.0
     script_path = os.path.join(args.resource_dir, "conlleval.pl")
     checkpoint_path = os.path.join(args.check_dir, "model.pt")
-    #epoch_iii = 1
     for epoch_i in range(0, args.epoch_num + 1):
         loss, train_time, dict_center = Procedure.train(model, train_loader, optimizer)
-        # loss, train_time = Procedure.train(model, train_loader, optimizer)
         print("[Epoch {:3d}] loss on train set is {:.5f} using {:.3f} secs".format(epoch_i, loss, train_time))
 
         dev_f1, dev_time = Procedure.test(model, dev_loader, script_path, dict_center)
-        # dev_f1, dev_time = Procedure.test(model, dev_loader, script_path, dict_center)
         print("(Epoch {:3d}) f1 score on dev set is {:.5f} using {:.3f} secs".format(epoch_i, dev_f1, dev_time))
 
         test_f1, test_time = Procedure.test(model, test_loader, script_path, dict_center)
-        # test_f1, test_time = Procedure.test(model, test_loader, script_path, dict_center)
         print("{{Epoch {:3d}}} f1 score on test set is {:.5f} using {:.3f} secs".format(epoch_i, test_f1, test_time))
-        #_ = Procedure.get_pit(model, test_loader,epoch_iii)
-        #epoch_iii = epoch_iii + 1
 
         if test_f1 > best_test:
             best_test = test_f1
