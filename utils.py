@@ -136,27 +136,3 @@ class Procedure(object):
 
         out_f1 = f1_score(seqs, outputs, oracles, eval_path)
         return out_f1, time.time() - time_start
-
-    @staticmethod
-    def get_pit(model, dataset, epoch_iii):
-        model.eval()
-        label_array = []
-        embedding_array = []
-        flag = 1
-        for sentences, segments in tqdm(dataset, ncols=50):
-            with torch.no_grad():
-                temp_labels,tem_embedding = model.get_pit(sentences,segments)
-                if flag == 1:
-                    label_array = temp_labels
-                    embedding_array = tem_embedding
-                else:
-                    embedding_array = np.append(embedding_array, tem_embedding,axis=0)
-                    label_array = np.append(label_array,temp_labels,axis=0)
-                flag = flag + 1
-        #os.chdir(r'./cl')
-        embedding_str = './non-cl/embedding' + str(epoch_iii)
-        label_str = './non-cl/label' + str(epoch_iii)
-        np.save(embedding_str,embedding_array)
-        np.save(label_str,label_array)
-        #os.chdir(r'../')
-        return time.time()
