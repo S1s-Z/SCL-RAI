@@ -6,7 +6,7 @@ from pytorch_pretrained_bert import BertModel
 
 from misc import flat_list
 from misc import sim_matrix, contrastive_loss
-from misc import iterative_support, conflict_judge, euclidean_dist
+from misc import iterative_support, conflict_judge
 from utils import UnitAlphabet, LabelAlphabet
 from sklearn.metrics.pairwise import cosine_similarity
 
