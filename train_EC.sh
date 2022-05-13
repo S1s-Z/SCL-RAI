@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python main.py -dd dataset/EC -cd save -rd resource

@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python main.py -dd dataset/MSRA -cd save -rd resource -cs 1000 -ud True
