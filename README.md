@@ -9,10 +9,10 @@ Code for our paper ROSE: Retrieval Augmented Contrastive Learning for Unlabeled 
 
 ## Reproduce results
 For EC: 
->CUDA_VISIBLE_DEVICES=0 python main.py -dd dataset/EC -cd save -rd resource
+>sh train_EC.sh
 
 For NEWS: 
->CUDA_VISIBLE_DEVICES=0 python main.py -dd dataset/MSRA -cd save -rd resource -cs 1000 -ud True
+>sh train_NEWS.sh
 
 
 We get our results in single A40.
