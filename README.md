@@ -4,6 +4,7 @@ Hi, this is the code of our paper "SCL-RAI: Span-based Contrastive Learning with
 🐾 News:
 
 Accepted by COLING 2022. 2022.08.16
+
 Code released at Github. 2022.08.16
 
 ## Preparation
