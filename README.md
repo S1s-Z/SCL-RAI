@@ -1,7 +1,7 @@
 # SCL-RAI
 Hi, this is the code of our paper "SCL-RAI: Span-based Contrastive Learning with Retrieval Augmented Inference for Unlabeled Entity Problem in NER" accepted by COLING 2022.
 
-🐾 News:
+News:
 
 Accepted by COLING 2022. 2022.08.16
 
